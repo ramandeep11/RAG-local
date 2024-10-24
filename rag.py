@@ -13,6 +13,7 @@ import urllib.request
 import requests
 from bs4 import BeautifulSoup
 from urllib.request import urlopen
+
 from PIL import Image
 import io
 import pytesseract
@@ -53,7 +54,9 @@ raw_prompt2 = PromptTemplate.from_template(
     )
 
 
-def extract_text_from_image(image_url):
+
+
+def extract_text_from_image(image_url ):
         try:
             response = requests.get(image_url)
             img = Image.open(io.BytesIO(response.content))
@@ -265,13 +268,23 @@ def tesseract_endpoint():
     url = json_content.get("url")
     query = json_content.get("query")
 
-    # Fetch webpage content
-    response = requests.get(url)
-    if response.status_code != 200:
-        return jsonify({"error": "Failed to fetch webpage"}), 400
+    # Fetch webpage content or read from local file
+    if url.startswith('http://') or url.startswith('https://'):
+        response = requests.get(url)
+        if response.status_code != 200:
+            return jsonify({"error": "Failed to fetch webpage"}), 400
+        content = response.text
+    else:
+        try:
+            with open(url, 'r', encoding='utf-8') as file:
+                content = file.read()
+        except FileNotFoundError:
+            return jsonify({"error": "Local file not found"}), 400
+        except IOError:
+            return jsonify({"error": "Error reading local file"}), 400
 
     # Parse and clean content
-    soup = BeautifulSoup(response.text, 'html.parser')
+    soup = BeautifulSoup(content, 'html.parser')
     text = soup.get_text()
     lines = (line.strip() for line in text.splitlines())
     chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
