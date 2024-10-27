@@ -141,7 +141,7 @@ raw_prompt = PromptTemplate.from_template(
 
 vector_DB = "VDB2"
 
-llm = Ollama(model="llama3.1")
+llm = Ollama(model="qwen2.5-coder:7b")
 
 app = Flask(__name__)
 CORS(app)
