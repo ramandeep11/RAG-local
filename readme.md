@@ -57,6 +57,6 @@ The UI maintains conversation context and provides a seamless experience for doc
 - Flask for API endpoints
 - Gradio for user interface
 - Tesseract OCR for image processing
-- LayoutLMv2 for document understanding
+- LayoutLMv2 for document understanding (not used in this version)
 - Chroma for vector storage
 - Qwen 2.5 Coder as the base LLM

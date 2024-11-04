@@ -261,6 +261,72 @@ def extract_text_endpoint():
 
     return jsonify({"extracted_text": combined_text})
 
+@app.route("/fusion_rag", methods=["POST"])
+def fusion_rag_endpoint():
+    json_content = request.json
+    url = json_content.get("url")
+    query = json_content.get("query")
+
+    # Fetch webpage content or read from local file
+    if url.startswith('http://') or url.startswith('https://'):
+        response = requests.get(url)
+        if response.status_code != 200:
+            return jsonify({"error": "Failed to fetch webpage"}), 400
+        content = response.text
+    else:
+        try:
+            with open(url, 'r', encoding='utf-8') as file:
+                content = file.read()
+        except FileNotFoundError:
+            return jsonify({"error": "Local file not found"}), 400
+        except IOError:
+            return jsonify({"error": "Error reading local file"}), 400
+
+    # Parse and clean content
+    soup = BeautifulSoup(content, 'html.parser')
+    text = soup.get_text()
+    lines = (line.strip() for line in text.splitlines())
+    chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+    cleaned_text = '\n'.join(chunk for chunk in chunks if chunk)
+
+    # Extract text from images
+    img_tags = soup.find_all('img')
+    image_texts = []
+
+    for img in img_tags:
+        src = img.get('src')
+        if src:
+            img_url = urljoin(url, src)
+            try:
+                image_text = extract_text_from_image(img_url)
+                if image_text:
+                    image_texts.append(image_text)
+            except Exception as e:
+                print(f"Error processing image {img_url}: {str(e)}")
+
+    # Combine all texts
+    combined_text = cleaned_text + ' ' + ' '.join(image_texts)
+
+    # Implement FusionRAG logic here
+    # This is a placeholder for the actual FusionRAG implementation
+    # You would need to replace this with your specific FusionRAG logic
+    fusion_rag_result = implement_fusion_rag(combined_text, query)
+
+    return jsonify({"answer": fusion_rag_result})
+
+def implement_fusion_rag(text, query):
+    # Placeholder for FusionRAG implementation
+    # Replace this with your actual FusionRAG logic
+    # This might involve:
+    # 1. Splitting the text into chunks
+    # 2. Embedding the chunks and the query
+    # 3. Retrieving relevant chunks
+    # 4. Fusing the retrieved information
+    # 5. Generating a response using a language model
+    
+    # For now, we'll just return a placeholder response
+    return f"FusionRAG processed query: {query} on the given text."
+
 
 @app.route("/tesseract", methods=["POST"])
 def tesseract_endpoint():
